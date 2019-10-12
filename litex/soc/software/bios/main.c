@@ -368,6 +368,7 @@ static void help(void)
 #ifdef CSR_SDRAM_BASE
 	puts("memtest    - run a memory test");
 #endif
+	puts("blinky     - do a blinky");
 }
 
 static char *get_token(char **str)
@@ -392,6 +393,41 @@ static void reboot(void)
 	ctrl_reset_write(1);
 }
 #endif
+
+
+static void cdelay(int i)
+{
+	while(i > 0) {
+#if defined (__lm32__)
+		__asm__ volatile("nop");
+#elif defined (__or1k__)
+		__asm__ volatile("l.nop");
+#elif defined (__picorv32__)
+		__asm__ volatile("nop");
+#elif defined (__vexriscv__)
+		__asm__ volatile("nop");
+#elif defined (__minerva__)
+		__asm__ volatile("nop");
+#elif defined (__rocket__)
+		__asm__ volatile("nop");
+#elif defined (__powerpc__)
+		__asm__ volatile("nop");
+#else
+#error Unsupported architecture
+#endif
+		i--;
+	}
+}
+static void blinky(void)
+{
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			gpio_out_write(1 << j);
+			cdelay(1000000);
+		}
+	}
+	gpio_out_write(0);
+}
 
 static void do_command(char *c)
 {
@@ -450,6 +486,7 @@ static void do_command(char *c)
 #endif
 	else if(strcmp(token, "memtest") == 0) memtest();
 #endif
+	else if(strcmp(token, "blinky") == 0) blinky();
 
 	else if(strcmp(token, "") != 0)
 		printf("Command not found\n");

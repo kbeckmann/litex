@@ -19,6 +19,8 @@ from litex.soc.integration.builder import *
 from litedram.modules import MT48LC16M16
 from litedram.phy import GENSDRPHY
 
+from litex.soc.cores.gpio import GPIOOut
+
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
@@ -58,6 +60,10 @@ class BaseSoC(SoCSDRAM):
                           **kwargs)
 
         self.submodules.crg = _CRG(platform, sys_clk_freq)
+
+        self.add_csr("gpio")
+        self.leds = platform.request("user_led")
+        self.submodules.gpio = GPIOOut(self.leds)
 
         if not self.integrated_main_ram_size:
             self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), cl=2)

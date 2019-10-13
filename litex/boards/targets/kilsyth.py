@@ -16,7 +16,7 @@ from litex.soc.cores.clock import *
 from litex.soc.integration.soc_sdram import *
 from litex.soc.integration.builder import *
 
-from litedram.modules import MT48LC16M16
+from litedram.modules import SDRAMModule, _TechnologyTimings, _SpeedgradeTimings
 from litedram.phy import GENSDRPHY
 
 from litex.soc.cores.gpio import GPIOOut
@@ -51,6 +51,17 @@ class _CRG(Module):
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
+# Should live in litedram/litedram/modules.py but that's another repo so this is easier
+class K4S561632J_UC75(SDRAMModule):
+    memtype = "SDR"
+    # geometry
+    nbanks = 4
+    nrows  = 8192
+    ncols  = 512
+    # timings
+    technology_timings = _TechnologyTimings(tREFI=64e6/8192, tWTR=(2, None), tCCD=(1, None), tRRD=(None, 15))
+    speedgrade_timings = {"default": _SpeedgradeTimings(tRP=40, tRCD=40, tWR=40, tRFC=(None, 128), tFAW=None, tRAS=100)}
+
 class BaseSoC(SoCSDRAM):
     def __init__(self, device="LFE5U-45F", toolchain="trellis", **kwargs):
         platform = kilsyth.Platform(device=device, toolchain=toolchain)
@@ -67,7 +78,7 @@ class BaseSoC(SoCSDRAM):
 
         if not self.integrated_main_ram_size:
             self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), cl=2)
-            sdram_module = MT48LC16M16(sys_clk_freq, "1:1")
+            sdram_module = K4S561632J_UC75(sys_clk_freq, "1:1")
             self.register_sdram(self.sdrphy,
                                 sdram_module.geom_settings,
                                 sdram_module.timing_settings)

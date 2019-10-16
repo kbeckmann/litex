@@ -6,6 +6,7 @@
 # License: BSD
 
 import argparse
+import os
 
 from migen import *
 from migen.genlib.resetsync import AsyncResetSynchronizer
@@ -55,7 +56,7 @@ class _CRG(Module):
 class K4S561632J_UC75(SDRAMModule):
     memtype = "SDR"
     # geometry
-    nbanks = 4
+    nbanks = 2
     nrows  = 8192
     ncols  = 512
     # timings
@@ -97,6 +98,8 @@ def main():
 
     soc = BaseSoC(device=args.device, toolchain=args.toolchain, **soc_sdram_argdict(args))
     builder = Builder(soc, **builder_argdict(args))
+    path = os.path.abspath(os.path.join(os.curdir, "kilsyth", "kernel"))
+    builder.add_software_package("kernel", path)
     builder.build()
 
 if __name__ == "__main__":

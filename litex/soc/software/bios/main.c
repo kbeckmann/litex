@@ -368,7 +368,9 @@ static void help(void)
 #ifdef CSR_SDRAM_BASE
 	puts("memtest    - run a memory test");
 #endif
+#ifdef CSR_GPIO_BASE
 	puts("blinky     - do a blinky");
+#endif
 }
 
 static char *get_token(char **str)
@@ -394,7 +396,7 @@ static void reboot(void)
 }
 #endif
 
-
+#ifdef CSR_GPIO_BASE
 static void cdelay(int i)
 {
 	while(i > 0) {
@@ -428,6 +430,7 @@ static void blinky(void)
 	}
 	gpio_out_write(0);
 }
+#endif
 
 static void do_command(char *c)
 {
@@ -486,7 +489,9 @@ static void do_command(char *c)
 #endif
 	else if(strcmp(token, "memtest") == 0) memtest();
 #endif
+#ifdef CSR_GPIO_BASE
 	else if(strcmp(token, "blinky") == 0) blinky();
+#endif
 
 	else if(strcmp(token, "") != 0)
 		printf("Command not found\n");

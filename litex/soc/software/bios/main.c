@@ -179,6 +179,23 @@ static void mc(char *dstaddr, char *srcaddr, char *count)
 }
 
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+static void fe(char *addr)
+{
+	char *c;
+	unsigned int addr2;
+
+	if((*addr == 0)) {
+		printf("fe <address>\n");
+		return;
+	}
+	addr2 = strtoul(addr, &c, 0);
+	if(*c != 0) {
+		printf("incorrect address\n");
+		return;
+	}
+	erase_flash_sector(addr2);
+}
+
 static void fw(char *addr, char *value, char *count)
 {
 	char *c;
@@ -210,7 +227,7 @@ static void fw(char *addr, char *value, char *count)
 			return;
 		}
 	}
-	for (i=0;i<count2;i++) write_to_flash(addr2, (unsigned char *)&value2, 4);
+	for (i=0;i<count2;i++) write_to_flash(addr2 + i * 4, (unsigned char *)&value2, 4);
 }
 #endif
 
@@ -340,6 +357,7 @@ static void help(void)
 	puts("mw         - write address space");
 	puts("mc         - copy address space");
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+	puts("fe         - erase sector on flash");
 	puts("fw         - write to flash");
 #endif
 #ifdef CSR_ETHPHY_MDIO_W_ADDR
@@ -442,6 +460,7 @@ static void do_command(char *c)
 	else if(strcmp(token, "mw") == 0) mw(get_token(&c), get_token(&c), get_token(&c));
 	else if(strcmp(token, "mc") == 0) mc(get_token(&c), get_token(&c), get_token(&c));
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+	else if(strcmp(token, "fe") == 0) fe(get_token(&c));
 	else if(strcmp(token, "fw") == 0) fw(get_token(&c), get_token(&c), get_token(&c));
 #endif
 #ifdef CSR_ETHPHY_MDIO_W_ADDR

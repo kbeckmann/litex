@@ -91,3 +91,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+riscv64-unknown-elf-gcc-8.1.0-2019.01.0-x86_64-linux-ubuntu14*
+soc_basesoc_kilsyth
+

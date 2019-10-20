@@ -31,13 +31,46 @@ _io = [
         Subsignal("dm", Pins("T19 E20")),
         IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST")
     ),
+
+    # PMOD1
+    ("spiflash", 0,
+        Subsignal("cs_n", Pins("A14"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("B16"), IOStandard("LVCMOS33")),
+        Subsignal("miso", Pins("C15"), IOStandard("LVCMOS33")), # io1
+        Subsignal("mosi", Pins("B15"), IOStandard("LVCMOS33")), # io0
+        Subsignal("wp",   Pins("C14"), IOStandard("LVCMOS33")), # io2
+        Subsignal("hold", Pins("D15"), IOStandard("LVCMOS33")), # io3
+    ),
+
+    ("spiflash4x", 0,
+        Subsignal("cs_n", Pins("A14"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("B16"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("B15 C15 C14 D15"), IOStandard("LVCMOS33")),
+    ),
+    # ("i2c", 0,
+    #     Subsignal("scl", Pins("12"), IOStandard("LVCMOS18")),
+    #     Subsignal("sda", Pins("20"), IOStandard("LVCMOS18")),
+    # ),
+    
 ]
 
 # Platform -----------------------------------------------------------------------------------------
 
 class Platform(LatticePlatform):
+    name = "KilsythRevA"
+    identifier = 0x1337
     default_clk_name = "clk16"
     default_clk_period = 1e9/16e6
+
+    # FIXME: Create a "spi flash module" object in the same way we have SDRAM
+    spiflash_model = "m25p16"
+    # spiflash_model = "n25q128"
+    spiflash_read_dummy_bits = 10
+    spiflash_clock_div = 8
+    # spiflash_total_size = int((128/8)*1024*1024) # 128Mbit
+    spiflash_total_size = int((8/8)*1024*1024) # 8Mbit
+    spiflash_page_size = 256
+    spiflash_sector_size = 0x10000
 
     def __init__(self, device="LFE5U-45F", **kwargs):
         LatticePlatform.__init__(self, device + "-6BG381C", _io, **kwargs)

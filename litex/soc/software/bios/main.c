@@ -630,7 +630,7 @@ int main(int i, char **c)
 	printf(" LiteX git sha1: "LITEX_GIT_SHA1"\n");
 	printf("\n");
 	printf("--=============== \e[1mSoC\e[0m ==================--\n");
-	printf("\e[1mCPU\e[0m:       ");
+	printf("\e[1mCPU\e[0m:           ");
 #ifdef __lm32__
 	printf("LM32");
 #elif __or1k__
@@ -647,13 +647,19 @@ int main(int i, char **c)
 	printf("Unknown");
 #endif
 	printf(" @ %dMHz\n", CONFIG_CLOCK_FREQUENCY/1000000);
-	printf("\e[1mROM\e[0m:       %dKB\n", ROM_SIZE/1024);
-	printf("\e[1mSRAM\e[0m:      %dKB\n", SRAM_SIZE/1024);
+	printf("\e[1mROM\e[0m:           %dKB\t0x%08X\n", ROM_SIZE/1024, ROM_BASE);
+	printf("\e[1mSRAM\e[0m:          %dKB\t0x%08X\n", SRAM_SIZE/1024, SRAM_BASE);
 #ifdef CONFIG_L2_SIZE
-	printf("\e[1mL2\e[0m:        %dKB\n", CONFIG_L2_SIZE/1024);
+	printf("\e[1mL2\e[0m:            %dKB\n", CONFIG_L2_SIZE/1024);
+#endif
+#ifdef SPIRAM_SIZE
+	printf("\e[1mSPIRAM_SIZE\e[0m:   %dKB\t0x%08X\n", SPIRAM_SIZE/1024, SPIRAM_BASE);
+#endif
+#ifdef SPIFLASH_SIZE
+	printf("\e[1mSPIFLASH_SIZE\e[0m: %dKB\t0x%08X\n", SPIFLASH_SIZE/1024, SPIFLASH_BASE);
 #endif
 #ifdef MAIN_RAM_SIZE
-	printf("\e[1mMAIN-RAM\e[0m:  %dKB\n", MAIN_RAM_SIZE/1024);
+	printf("\e[1mMAIN-RAM\e[0m:      %dKB\t0x%08X\n", MAIN_RAM_SIZE/1024, MAIN_RAM_BASE);
 #endif
 	printf("\n");
 

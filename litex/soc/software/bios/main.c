@@ -359,6 +359,7 @@ static void help(void)
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
 	puts("fe         - erase sector on flash");
 	puts("fw         - write to flash");
+	puts("fb         - flash boot");
 #endif
 #ifdef CSR_ETHPHY_MDIO_W_ADDR
 	puts("mdiow      - write MDIO register");
@@ -462,6 +463,7 @@ static void do_command(char *c)
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
 	else if(strcmp(token, "fe") == 0) fe(get_token(&c));
 	else if(strcmp(token, "fw") == 0) fw(get_token(&c), get_token(&c), get_token(&c));
+	else if(strcmp(token, "fb") == 0) spiflashboot(get_token(&c));
 #endif
 #ifdef CSR_ETHPHY_MDIO_W_ADDR
 	else if(strcmp(token, "mdiow") == 0) mdiow(get_token(&c), get_token(&c), get_token(&c));

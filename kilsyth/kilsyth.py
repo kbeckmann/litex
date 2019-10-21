@@ -24,6 +24,8 @@ from litedram.phy import GENSDRPHY
 
 from litex.soc.cores.gpio import GPIOOut
 
+from kilsyth.spi_ram import SpiRam
+
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(Module):
@@ -65,42 +67,45 @@ class K4S561632J_UC75(SDRAMModule):
     technology_timings = _TechnologyTimings(tREFI=64e6/8192, tWTR=(2, None), tCCD=(1, None), tRRD=(None, 15))
     speedgrade_timings = {"default": _SpeedgradeTimings(tRP=40, tRCD=40, tWR=40, tRFC=(None, 128), tFAW=None, tRAS=100)}
 
-class BaseSoC(SoCCore):
+class BaseSoC(SoCSDRAM):
 
     # Create a default CSR map to prevent values from getting reassigned.
     # This increases consistency across litex versions.
-    SoCCore.csr_map = {
-        "ctrl":           0,  # provided by default (optional)
-        "crg":            1,  # user
-        "uart_phy":       2,  # provided by default (optional)
-        "uart":           3,  # provided by default (optional)
-        "identifier_mem": 4,  # provided by default (optional)
-        "timer0":         5,  # provided by default (optional)
-        "cpu_or_bridge":  8,
-        "usb":            9,
-        "picorvspi":      10,
-        "touch":          11,
-        "reboot":         12,
-        "rgb":            13,
-        "version":        14,
-    }
+    # SoCSDRAM.csr_map = {
+    #     "ctrl":           0,  # provided by default (optional)
+    #     "crg":            1,  # user
+    #     "uart_phy":       2,  # provided by default (optional)
+    #     "uart":           3,  # provided by default (optional)
+    #     "identifier_mem": 4,  # provided by default (optional)
+    #     "timer0":         5,  # provided by default (optional)
+    #     "cpu_or_bridge":  8,
+    #     "usb":            9,
+    #     "picorvspi":      10,
+    #     "touch":          11,
+    #     "reboot":         12,
+    #     "rgb":            13,
+    #     "version":        14,
+    # }
 
     # Statically-define the memory map, to prevent it from shifting across
     # various litex versions.
-    SoCCore.mem_map = {
+    SoCSDRAM.mem_map = {
         "rom":      0x00000000,
         "sram":     0x10000000,
-        "main_ram": 0x40000000,
         "csr":      0x82000000,
 
         "spiflash": 0x20000000,  # (default shadow @0xa0000000)
+        "sdram":    0x30000000,
+        "main_ram": 0x40000000,
+
+        "spiram":   0x50000000,
     }
 
 
     def __init__(self, device="LFE5U-45F", toolchain="trellis", **kwargs):
         platform = kilsyth.Platform(device=device, toolchain=toolchain)
-        sys_clk_freq = int(16e6)
-        SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
+        sys_clk_freq = int(50e6)
+        SoCSDRAM.__init__(self, platform, clk_freq=sys_clk_freq,
                         integrated_rom_size= 0x_8000,
                         integrated_sram_size=0x10000,
                         **kwargs)
@@ -111,31 +116,49 @@ class BaseSoC(SoCCore):
         self.leds = platform.request("user_led")
         self.submodules.gpio = GPIOOut(self.leds)
 
+        ################# spiflash
+
         self.add_csr("spiflash")
-        # self.submodules.spiflash = SpiFlash(platform.request("spiflash"))
-
-        # self.submodules.spiflash = spi_flash.SpiFlashSingle(
-        #     platform.request("spiflash"),
-        #     dummy=platform.spiflash_read_dummy_bits,
-        #     div=platform.spiflash_clock_div)
-
         self.submodules.spiflash = SpiFlash(
             platform.request("spiflash"),
             # platform.request("spiflash4x"),
             dummy=platform.spiflash_read_dummy_bits,
-            div=platform.spiflash_clock_div)
+            div=platform.spiflash_clock_div,
+            endianness="little")
 
         self.add_constant("SPIFLASH_PAGE_SIZE", platform.spiflash_page_size)
         self.add_constant("SPIFLASH_SECTOR_SIZE", platform.spiflash_sector_size)
         self.register_mem("spiflash", self.mem_map["spiflash"],
             self.spiflash.bus, size=platform.spiflash_total_size)
 
-        # if not self.integrated_main_ram_size:
-        #     self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), cl=2)
-        #     sdram_module = K4S561632J_UC75(sys_clk_freq, "1:1")
-        #     self.register_sdram(self.sdrphy,
-        #                         sdram_module.geom_settings,
-        #                         sdram_module.timing_settings)
+        ################# spiram
+
+        self.add_csr("spiram")
+        self.submodules.spiram = SpiRam(
+            platform.request("spiram"),
+            # platform.request("spiram4x"),
+            dummy=platform.spiflash_read_dummy_bits,
+            div=platform.spiflash_clock_div,
+            # div=64,
+            endianness="little")
+
+        # self.add_constant("SPIRAM_PAGE_SIZE", platform.spiflash_page_size)
+        # self.add_constant("SPIRAM_SECTOR_SIZE", platform.spiflash_sector_size)
+        self.register_mem("spiram", self.mem_map["spiram"],
+            self.spiram.bus, size=int((64/8)*1024*1024))
+
+        #litex> crc 0x20000000 1048576
+        #CRC32: a738ea1c                  
+
+        ################# sdram
+
+        if not self.integrated_main_ram_size:
+            # self.add_csr("sdram")
+            self.submodules.sdrphy = GENSDRPHY(platform.request("sdram"), cl=2)
+            sdram_module = K4S561632J_UC75(sys_clk_freq, "1:1")
+            self.register_sdram(self.sdrphy,
+                                sdram_module.geom_settings,
+                                sdram_module.timing_settings)
 
 # Build --------------------------------------------------------------------------------------------
 

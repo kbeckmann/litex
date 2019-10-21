@@ -441,3 +441,16 @@ void romboot(void)
 	boot(0, 0, 0, ROM_BOOT_ADDRESS);
 }
 #endif
+
+#if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
+void spiflashboot(char *addr)
+{
+	char *c;
+	unsigned int addr2;
+	addr2 = strtoul(addr, &c, 0);
+	if(*c != 0) {
+		boot(0, 0, 0, SPIFLASH_BASE);
+	}
+	boot(0, 0, 0, addr2);
+}
+#endif

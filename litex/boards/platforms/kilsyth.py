@@ -32,16 +32,32 @@ _io = [
         IOStandard("LVCMOS33"), Misc("SLEWRATE=FAST")
     ),
 
+    # PMOD0
+    ("spiram", 0,
+        Subsignal("cs_n", Pins("A12"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("D12"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("A13"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("D13"), IOStandard("LVCMOS33")),
+        
+        Subsignal("wp",   Pins("B12"), IOStandard("LVCMOS33")), # io2
+        Subsignal("hold", Pins("C12"), IOStandard("LVCMOS33")), # io3
+    ),
+    ("spiram4x", 0,
+        Subsignal("cs_n", Pins("A17"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("D13"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("D12 A13 B12 C12"), IOStandard("LVCMOS33")),
+    ),
+
     # PMOD1
     ("spiflash", 0,
         Subsignal("cs_n", Pins("A14"), IOStandard("LVCMOS33")),
-        Subsignal("clk",  Pins("B16"), IOStandard("LVCMOS33")),
-        Subsignal("miso", Pins("C15"), IOStandard("LVCMOS33")), # io1
         Subsignal("mosi", Pins("B15"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("C15"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("B16"), IOStandard("LVCMOS33")),
+        
         Subsignal("wp",   Pins("C14"), IOStandard("LVCMOS33")), # io2
         Subsignal("hold", Pins("D15"), IOStandard("LVCMOS33")), # io3
     ),
-
     ("spiflash4x", 0,
         Subsignal("cs_n", Pins("A14"), IOStandard("LVCMOS33")),
         Subsignal("clk",  Pins("B16"), IOStandard("LVCMOS33")),
@@ -65,10 +81,10 @@ class Platform(LatticePlatform):
     # FIXME: Create a "spi flash module" object in the same way we have SDRAM
     spiflash_model = "m25p16"
     # spiflash_model = "n25q128"
-    spiflash_read_dummy_bits = 10
-    spiflash_clock_div = 8
-    # spiflash_total_size = int((128/8)*1024*1024) # 128Mbit
-    spiflash_total_size = int((8/8)*1024*1024) # 8Mbit
+    spiflash_read_dummy_bits = 8
+    spiflash_clock_div = 2
+    spiflash_total_size = int((128/8)*1024*1024) # 128Mbit
+    # spiflash_total_size = int((8/8)*1024*1024) # 8Mbit
     spiflash_page_size = 256
     spiflash_sector_size = 0x10000
 

@@ -144,6 +144,52 @@ static void mw(char *addr, char *value, char *count)
 	for (i=0;i<count2;i++) *addr2++ = value2;
 }
 
+static void mww(char *addr, char *value)
+{
+	char *c;
+	uint16_t *addr2;
+	uint16_t value2;
+
+	if((*addr == 0) || (*value == 0)) {
+		printf("mww <address> <value>\n");
+		return;
+	}
+	addr2 = (uint16_t *)strtoul(addr, &c, 0);
+	if(*c != 0) {
+		printf("incorrect address\n");
+		return;
+	}
+	value2 = (uint16_t) strtoul(value, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+	*addr2 = value2;
+}
+
+static void mwb(char *addr, char *value)
+{
+	char *c;
+	uint8_t *addr2;
+	uint8_t value2;
+
+	if((*addr == 0) || (*value == 0)) {
+		printf("mwb <address> <value>\n");
+		return;
+	}
+	addr2 = (uint8_t *)strtoul(addr, &c, 0);
+	if(*c != 0) {
+		printf("incorrect address\n");
+		return;
+	}
+	value2 = (uint8_t) strtoul(value, &c, 0);
+	if(*c != 0) {
+		printf("incorrect value\n");
+		return;
+	}
+	*addr2 = value2;
+}
+
 static void mc(char *dstaddr, char *srcaddr, char *count)
 {
 	char *c;
@@ -355,6 +401,8 @@ static void help(void)
 	puts("LiteX BIOS, available commands:");
 	puts("mr         - read address space");
 	puts("mw         - write address space");
+	puts("mww        - write 16-bit word to address space");
+	puts("mwb        - write 8-bit word to address space");
 	puts("mc         - copy address space");
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
 	puts("fe         - erase sector on flash");
@@ -459,6 +507,8 @@ static void do_command(char *c)
 
 	if(strcmp(token, "mr") == 0) mr(get_token(&c), get_token(&c));
 	else if(strcmp(token, "mw") == 0) mw(get_token(&c), get_token(&c), get_token(&c));
+	else if(strcmp(token, "mww") == 0) mww(get_token(&c), get_token(&c));
+	else if(strcmp(token, "mwb") == 0) mwb(get_token(&c), get_token(&c));
 	else if(strcmp(token, "mc") == 0) mc(get_token(&c), get_token(&c), get_token(&c));
 #if (defined CSR_SPIFLASH_BASE && defined SPIFLASH_PAGE_SIZE)
 	else if(strcmp(token, "fe") == 0) fe(get_token(&c));

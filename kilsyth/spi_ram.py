@@ -164,36 +164,45 @@ class SpiRamSingle(SpiFlashCommon, AutoCSR):
 
         ##### write
 
-        write_width = wbone_width
+        # TODO: Make this nicer somehow.
+        for write_width, addr_offset, mask in [
+                (8,   0, 0b0001),
+                (8,   1, 0b0010),
+                (8,   2, 0b0100),
+                (8,   3, 0b1000),
+                (16,  0, 0b0011),
+                (16,  2, 0b1100),
+                (32,  0, 0b1111)
+            ]:
 
-        dat_w_endian = Signal(write_width)
-        if endianness == "big":
-            self.comb += dat_w_endian.eq(bus.dat_w)
-        else:
-            self.comb += dat_w_endian.eq(reverse_bytes(bus.dat_w))
+            dat_w_endian = Signal(write_width)
+            if endianness == "big":
+                self.comb += dat_w_endian.eq(bus.dat_w)
+            else:
+                self.comb += dat_w_endian.eq(reverse_bytes(bus.dat_w))
 
-        sec2 = [
-                (cmd_width*div,
-                    [cs_n.eq(0), sr[-cmd_width:].eq(_WRITE)]),
-                (addr_width*div,
-                    [sr[-addr_width:].eq(Cat(z, bus.adr))]),
-                (write_width*div,
-                    [sr[-write_width:].eq(dat_w_endian)]),
-                (1,
-                    [bus.ack.eq(1), cs_n.eq(1)]),
-                (div, # tSHSL!
-                    [bus.ack.eq(0)]),
-                (0,
-                    []),
-            ]
+            sec2 = [
+                    (cmd_width*div,
+                        [cs_n.eq(0), sr[-cmd_width:].eq(_WRITE)]),
+                    (addr_width*div,
+                        [sr[-addr_width:].eq(Cat(z, bus.adr) + addr_offset)]),
+                    (write_width*div,
+                        [sr[-write_width:].eq(dat_w_endian)]),
+                    (1,
+                        [bus.ack.eq(1), cs_n.eq(1)]),
+                    (div, # tSHSL!
+                        [bus.ack.eq(0)]),
+                    (0,
+                        []),
+                ]
 
-        # accumulate timeline deltas
-        t2, tseq2 = 0, []
-        for dt, a in sec2:
-            tseq2.append((t2, a))
-            t2 += dt
+            # accumulate timeline deltas
+            t2, tseq2 = 0, []
+            for dt, a in sec2:
+                tseq2.append((t2, a))
+                t2 += dt
 
-        self.sync += timeline(bus.we & bus.cyc & bus.stb & (i == div - 1), tseq2)
+            self.sync += timeline(bus.we & bus.cyc & bus.stb & (bus.sel == mask) & (i == div - 1), tseq2)
 
 
 def SpiRam(pads, *args, **kwargs):

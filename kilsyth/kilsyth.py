@@ -25,6 +25,7 @@ from litedram.phy import GENSDRPHY
 from litex.soc.cores.gpio import GPIOOut
 
 from kilsyth.spi_ram import SpiRam
+from kilsyth.spi_flash import SpiFlashEx
 
 # CRG ----------------------------------------------------------------------------------------------
 
@@ -119,11 +120,13 @@ class BaseSoC(SoCCore):
         ################# spiflash
 
         self.add_csr("spiflash")
-        self.submodules.spiflash = SpiFlash(
-            platform.request("spiflash"),
-            # platform.request("spiflash4x"),
-            dummy=platform.spiflash_read_dummy_bits,
+        self.submodules.spiflash = SpiFlashEx(
+            # platform.request("spiflash"),
+            platform.request("spiflash4x"),
+#            dummy=platform.spiflash_read_dummy_bits,
+            dummy=4,
             div=platform.spiflash_clock_div,
+            # div=64,
             endianness="little")
 
         self.add_constant("SPIFLASH_PAGE_SIZE", platform.spiflash_page_size)

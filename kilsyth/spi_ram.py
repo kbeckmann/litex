@@ -204,9 +204,176 @@ class SpiRamSingle(SpiFlashCommon, AutoCSR):
 
             self.sync += timeline(bus.we & bus.cyc & bus.stb & (bus.sel == mask) & (i == div - 1), tseq2)
 
+class SpiRamQuad(SpiFlashCommon, AutoCSR):
+    def __init__(self, pads, dummy=15, div=2, endianness="big"):
+        """
+        Simple SPI flash.
+        Supports multi-bit pseudo-parallel reads (aka Dual or Quad I/O Fast
+        Read). Only supports mode0 (cpol=0, cpha=0).
+        """
+        SpiFlashCommon.__init__(self, pads)
+        self.bus = bus = wishbone.Interface()
+        spi_width = len(pads.dq)
+        assert spi_width == 4
+
+        # # #
+
+        # 1. Enable Quad (0x35)
+        # 2. Read (0xeb)
+
+        cs_n = Signal(reset=1)
+        clk = Signal()
+        clk_en = Signal()
+        dq_oe = Signal()
+        wbone_width = len(bus.dat_r)
+
+        # Enable quad mode
+        quad_enable_cmd = _format_cmd(0x35, spi_width)
+        quad_enable_width = spi_width * 8
+
+        read_cmd = _QIOFR
+        read_cmd_width = 8
+
+        write_cmd = _WRITE
+        write_cmd_width = 8
+
+        addr_width = 24
+
+        dq = TSTriple(spi_width)
+        self.specials.dq = dq.get_tristate(pads.dq)
+
+        sr = Signal(max(read_cmd_width, addr_width, wbone_width))
+        if endianness == "big":
+            self.comb += bus.dat_r.eq(sr)
+        else:
+            self.comb += bus.dat_r.eq(reverse_bytes(sr))
+
+        hw_read_logic = [
+            pads.clk.eq(clk & clk_en),
+            pads.cs_n.eq(cs_n),
+            dq.o.eq(sr[-spi_width:]),
+            dq.oe.eq(dq_oe)
+        ]
+        self.comb += hw_read_logic
+
+        if div < 2:
+            raise ValueError("Unsupported value \'{}\' for div parameter for SpiFlash core".format(div))
+        else:
+            i = Signal(max=div)
+            dqi = Signal(spi_width)
+            self.sync += [
+                If(i == div//2 - 1,
+                    clk.eq(1),
+                    dqi.eq(dq.i),
+                ),
+                If(i == div - 1,
+                    i.eq(0),
+                    clk.eq(0),
+                    sr.eq(Cat(dqi, sr[:-spi_width]))
+                ).Else(
+                    i.eq(i + 1),
+                ),
+            ]
+
+        # spi is byte-addressed, prefix by zeros
+        z = Replicate(0, log2_int(wbone_width//8))
+
+        quad_enabled = Signal()
+
+        enable_quad = [
+            # 1. Write 0x35
+            (quad_enable_width//spi_width*div,
+                [clk_en.eq(1), dq_oe.eq(1), cs_n.eq(0), sr[-quad_enable_width:].eq(quad_enable_cmd)]),
+            (div,
+                [clk_en.eq(0), cs_n.eq(1), dq_oe.eq(1), quad_enabled.eq(1)]),
+        ]
+
+        seq = [
+            # 3. Perform the read
+            (read_cmd_width//spi_width*div,
+                [clk_en.eq(1), dq_oe.eq(1), cs_n.eq(0), sr[-read_cmd_width:].eq(read_cmd)]),
+            (addr_width//spi_width*div,
+                [sr[-addr_width:].eq(Cat(z, bus.adr))]),
+            ((dummy + wbone_width//spi_width)*div,
+                [dq_oe.eq(0)]),
+            (1,
+                [bus.ack.eq(1), clk_en.eq(0), cs_n.eq(1)]),
+            (div, # tSHSL!
+                [bus.ack.eq(0)]),
+            (0,
+                []),
+        ]
+
+        # accumulate timeline deltas
+        t, tseq = 0, []
+        for dt, a in seq:
+            tseq.append((t, a))
+            t += dt
+
+        # accumulate timeline deltas
+        t, tseq_enable_quad = 0, []
+        for dt, a in enable_quad + seq:
+            tseq_enable_quad.append((t, a))
+            t += dt
+
+        self.sync += timeline(~bus.we & bus.cyc & bus.stb & quad_enabled  & (i == div - 1), tseq)
+        self.sync += timeline(~bus.we & bus.cyc & bus.stb & ~quad_enabled & (i == div - 1), tseq_enable_quad)
+
+
+
+        # TODO: Make this nicer somehow.
+        for write_width, addr_offset, mask in [
+                (8,   0, 0b0001),
+                (8,   1, 0b0010),
+                (8,   2, 0b0100),
+                (8,   3, 0b1000),
+                (16,  0, 0b0011),
+                (16,  2, 0b1100),
+                (32,  0, 0b1111)
+            ]:
+
+            dat_w_endian = Signal(write_width)
+            if endianness == "big":
+                self.comb += dat_w_endian.eq(bus.dat_w)
+            else:
+                self.comb += dat_w_endian.eq(reverse_bytes(bus.dat_w))
+
+            sec2 = [
+                    (write_cmd_width//spi_width*div,
+                        [clk_en.eq(1), cs_n.eq(0), dq_oe.eq(1), sr[-write_cmd_width:].eq(write_cmd)]),
+                    (addr_width//spi_width*div,
+                        [sr[-addr_width:].eq(Cat(z, bus.adr) + addr_offset)]),
+                    (write_width//spi_width*div,
+                        [sr[-write_width:].eq(dat_w_endian)]),
+                    (div,
+                        [clk_en.eq(0), cs_n.eq(1)]),
+                    (1,
+                        [bus.ack.eq(1), dq_oe.eq(0)]),
+                    (div, # tSHSL!
+                        [bus.ack.eq(0)]),
+                    (0,
+                        []),
+                ]
+
+            # accumulate timeline deltas
+            t2, tseq2 = 0, []
+            for dt, a in sec2:
+                tseq2.append((t2, a))
+                t2 += dt
+
+            # accumulate timeline deltas
+            t2, tseq2_quad = 0, []
+            for dt, a in enable_quad + sec2:
+                tseq2_quad.append((t2, a))
+                t2 += dt
+
+            self.sync += timeline(bus.we & bus.cyc & bus.stb & quad_enabled  & (bus.sel == mask) & (i == div - 1), tseq2)
+            self.sync += timeline(bus.we & bus.cyc & bus.stb & ~quad_enabled & (bus.sel == mask) & (i == div - 1), tseq2_quad)
+
+
 
 def SpiRam(pads, *args, **kwargs):
     if hasattr(pads, "mosi"):
-       return SpiRamSingle(pads, *args, **kwargs)
-    # else:
-    #     return SpiFlashDualQuad(pads, *args, **kwargs)
+        return SpiRamSingle(pads, *args, **kwargs)
+    else:
+        return SpiRamQuad(pads, *args, **kwargs)

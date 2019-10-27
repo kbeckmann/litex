@@ -105,7 +105,7 @@ class BaseSoC(SoCCore):
     def __init__(self, device="LFE5U-45F", toolchain="trellis", **kwargs):
         platform = kilsyth.Platform(device=device, toolchain=toolchain)
         sys_clk_freq = int(50e6)
-        # sys_clk_freq = int(24e6)
+        # sys_clk_freq = int(8e6)
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
                         integrated_rom_size= 0x8000,
                         integrated_sram_size=0x8000,
@@ -138,10 +138,12 @@ class BaseSoC(SoCCore):
 
         self.add_csr("main_ram")
         self.submodules.main_ram = SpiRam(
-            platform.request("spiram"),
-            # platform.request("spiram4x"),
-            dummy=platform.spiflash_read_dummy_bits,
+            # platform.request("spiram"),
+            platform.request("spiram4x"),
+            # dummy=platform.spiflash_read_dummy_bits,
+            dummy=6,
             div=platform.spiflash_clock_div,
+            # div=64,
             endianness="little")
 
         self.register_mem("main_ram", self.mem_map["main_ram"],

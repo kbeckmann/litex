@@ -91,6 +91,7 @@ class BaseSoC(SoCCore):
 
     # Statically-define the memory map, to prevent it from shifting across
     # various litex versions.
+    # SoCSDRAM.mem_map = {
     SoCCore.mem_map = {
         "rom":      0x00000000,
         "sram":     0x10000000,
@@ -106,6 +107,7 @@ class BaseSoC(SoCCore):
         platform = kilsyth.Platform(device=device, toolchain=toolchain)
         sys_clk_freq = int(50e6)
         # sys_clk_freq = int(8e6)
+        # SoCSDRAM.__init__(self, platform, clk_freq=sys_clk_freq,
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
                         integrated_rom_size= 0x8000,
                         integrated_sram_size=0x8000,

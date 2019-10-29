@@ -21,6 +21,8 @@ from litex.soc.integration.builder import *
 
 from litedram.modules import SDRAMModule, _TechnologyTimings, _SpeedgradeTimings
 from litedram.phy import GENSDRPHY
+from litedram.core.crossbar import LiteDRAMCrossbar
+from litedram.frontend.wishbone import *
 
 from litex.soc.cores.gpio import GPIOOut
 
@@ -133,8 +135,17 @@ class BaseSoC(SoCCore):
 
         self.add_constant("SPIFLASH_PAGE_SIZE", platform.spiflash_page_size)
         self.add_constant("SPIFLASH_SECTOR_SIZE", platform.spiflash_sector_size)
-        self.register_mem("spiflash", self.mem_map["spiflash"],
-            self.spiflash.bus, size=platform.spiflash_total_size)
+
+        if False:
+            # Cache the spiflash
+            spiflash_cache_size = 2**10
+            wb_spiflash_cache = wishbone.Interface()
+            self.register_mem("spiflash", self.mem_map["spiflash"], wb_spiflash_cache, platform.spiflash_total_size)
+            spiflash_cache = wishbone.Cache(spiflash_cache_size//4, wb_spiflash_cache, self.spiflash.bus)
+            self.submodules.spiflash_cache = spiflash_cache
+        else:
+            self.register_mem("spiflash", self.mem_map["spiflash"],
+                self.spiflash.bus, size=platform.spiflash_total_size)
 
         ################# spiram
 
@@ -148,8 +159,19 @@ class BaseSoC(SoCCore):
             # div=64,
             endianness="little")
 
-        self.register_mem("main_ram", self.mem_map["main_ram"],
-            self.main_ram.bus, size=int((64/8)*1024*1024))
+        if True:
+            # Cache the spiram
+            l2_size = 2**14
+            wb_l2 = wishbone.Interface()
+            self.register_mem("main_ram", self.mem_map["main_ram"], wb_l2, int((64/8)*1024*1024))
+            l2_cache = wishbone.Cache(l2_size//4, wb_l2, self.main_ram.bus)
+            self.submodules.l2_cache = l2_cache
+        else:
+            self.register_mem("main_ram", self.mem_map["main_ram"],
+                self.main_ram.bus, int((64/8)*1024*1024))
+
+
+
 
         ################# sdram (not used)
 

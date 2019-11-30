@@ -90,7 +90,7 @@ class BaseSoC(SoCCore):
 
     def __init__(self, device="LFE5U-25F", toolchain="trellis", **kwargs):
         platform = pergola.Platform(device=device, toolchain=toolchain)
-        sys_clk_freq = int(50e6)
+        sys_clk_freq = int(40e6)
         # sys_clk_freq = int(8e6)
         # SoCSDRAM.__init__(self, platform, clk_freq=sys_clk_freq,
         SoCCore.__init__(self, platform, clk_freq=sys_clk_freq,
@@ -108,7 +108,7 @@ class BaseSoC(SoCCore):
 
         self.add_csr("main_ram")
         self.submodules.main_ram = SpiRam(
-            platform.request("spiram4x", 0),
+            platform.request("spiram4x", 1),
             dummy=6,
             div=platform.spiflash_clock_div,
             endianness="little")

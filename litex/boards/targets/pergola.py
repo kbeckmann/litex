@@ -104,29 +104,25 @@ class BaseSoC(SoCCore):
         self.leds = platform.request("user_led")
         self.submodules.gpio = GPIOOut(self.leds)
 
-        # ################# spiram
+        ################# spiram
 
-        # self.add_csr("main_ram")
-        # self.submodules.main_ram = SpiRam(
-        #     # platform.request("spiram"),
-        #     platform.request("spiram4x"),
-        #     # dummy=platform.spiflash_read_dummy_bits,
-        #     dummy=6,
-        #     div=platform.spiflash_clock_div,
-        #     # div=64,
-        #     endianness="little")
+        self.add_csr("main_ram")
+        self.submodules.main_ram = SpiRam(
+            platform.request("spiram4x", 0),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
 
-        # if True:
-        #     # Cache the spiram
-        #     l2_size = 2**14
-        #     wb_l2 = wishbone.Interface()
-        #     self.register_mem("main_ram", self.mem_map["main_ram"], wb_l2, int((64/8)*1024*1024))
-        #     l2_cache = wishbone.Cache(l2_size//4, wb_l2, self.main_ram.bus)
-        #     self.submodules.l2_cache = l2_cache
-        # else:
-        #     self.register_mem("main_ram", self.mem_map["main_ram"],
-        #         self.main_ram.bus, int((64/8)*1024*1024))
-
+        if True:
+            # Cache the spiram
+            l2_size = 2**14
+            wb_l2 = wishbone.Interface()
+            self.register_mem("main_ram", self.mem_map["main_ram"], wb_l2, int((64/8)*1024*1024))
+            l2_cache = wishbone.Cache(l2_size//4, wb_l2, self.main_ram.bus)
+            self.submodules.l2_cache = l2_cache
+        else:
+            self.register_mem("main_ram", self.mem_map["main_ram"],
+                self.main_ram.bus, int((64/8)*1024*1024))
 
 
 

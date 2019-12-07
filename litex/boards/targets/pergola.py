@@ -84,8 +84,14 @@ class BaseSoC(SoCCore):
         "sram":     0x10000000,
         "csr":      0x82000000,
 
-        "spiflash": 0x20000000,  # (default shadow @0xa0000000)
-        "main_ram": 0x40000000,
+        "spiflash": 0x20000000,   # (default shadow @0xa0000000)
+        "main_ram": 0x40000000,   # built in 1
+        "extra_ram1": 0x41000000, # built in 2
+        "pmod_ram1": 0x42000000, # pmod 1
+        "pmod_ram2": 0x43000000, # pmod 2
+        "pmod_ram3": 0x44000000, # pmod 3
+        "pmod_ram4": 0x45000000, # pmod 4
+        "pmod_ram5": 0x46000000, # pmod 5
     }
 
     def __init__(self, device="LFE5U-25F", toolchain="trellis", **kwargs):
@@ -106,24 +112,76 @@ class BaseSoC(SoCCore):
 
         ################# spiram
 
+        # # Cache the spiram
+        # l2_size = 2**14
+        # wb_l2 = wishbone.Interface()
+        # self.register_mem("main_ram", self.mem_map["main_ram"], wb_l2, int((64/8)*1024*1024))
+        # l2_cache = wishbone.Cache(l2_size//4, wb_l2, self.main_ram.bus)
+        # self.submodules.l2_cache = l2_cache
+
+
         self.add_csr("main_ram")
         self.submodules.main_ram = SpiRam(
+            platform.request("spiram4x", 0),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
+        self.register_mem("main_ram", self.mem_map["main_ram"],
+            self.main_ram.bus, int((64/8)*1024*1024))
+
+        self.add_csr("extra_ram1")
+        self.submodules.extra_ram1 = SpiRam(
             platform.request("spiram4x", 1),
             dummy=6,
             div=platform.spiflash_clock_div,
             endianness="little")
+        self.register_mem("extra_ram1", self.mem_map["extra_ram1"],
+            self.extra_ram1.bus, int((64/8)*1024*1024))
 
-        if True:
-            # Cache the spiram
-            l2_size = 2**14
-            wb_l2 = wishbone.Interface()
-            self.register_mem("main_ram", self.mem_map["main_ram"], wb_l2, int((64/8)*1024*1024))
-            l2_cache = wishbone.Cache(l2_size//4, wb_l2, self.main_ram.bus)
-            self.submodules.l2_cache = l2_cache
-        else:
-            self.register_mem("main_ram", self.mem_map["main_ram"],
-                self.main_ram.bus, int((64/8)*1024*1024))
+        self.add_csr("pmod_ram1")
+        self.submodules.pmod_ram1 = SpiRam(
+            platform.request("spiram4x", 2),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
+        self.register_mem("pmod_ram1", self.mem_map["pmod_ram1"],
+            self.pmod_ram1.bus, int((64/8)*1024*1024))
 
+        self.add_csr("pmod_ram2")
+        self.submodules.pmod_ram2 = SpiRam(
+            platform.request("spiram4x", 3),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
+        self.register_mem("pmod_ram2", self.mem_map["pmod_ram2"],
+            self.pmod_ram2.bus, int((64/8)*1024*1024))
+
+        # self.add_csr("pmod_ram3")
+        # self.submodules.pmod_ram3 = SpiRam(
+        #     platform.request("spiram4x", 4),
+        #     dummy=6,
+        #     div=platform.spiflash_clock_div,
+        #     endianness="little")
+        # self.register_mem("pmod_ram3", self.mem_map["pmod_ram3"],
+        #     self.pmod_ram3.bus, int((64/8)*1024*1024))
+
+        self.add_csr("pmod_ram4")
+        self.submodules.pmod_ram4 = SpiRam(
+            platform.request("spiram4x", 5),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
+        self.register_mem("pmod_ram4", self.mem_map["pmod_ram4"],
+            self.pmod_ram4.bus, int((64/8)*1024*1024))
+
+        self.add_csr("pmod_ram5")
+        self.submodules.pmod_ram5 = SpiRam(
+            platform.request("spiram4x", 6),
+            dummy=6,
+            div=platform.spiflash_clock_div,
+            endianness="little")
+        self.register_mem("pmod_ram5", self.mem_map["pmod_ram5"],
+            self.pmod_ram5.bus, int((64/8)*1024*1024))
 
 
         ################# sdram (not used)
@@ -139,11 +197,11 @@ class BaseSoC(SoCCore):
 # Build --------------------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="LiteX SoC on Kilsyth")
+    parser = argparse.ArgumentParser(description="LiteX SoC on Pergola")
     parser.add_argument("--gateware-toolchain", dest="toolchain", default="trellis",
         help='gateware toolchain to use, trellis (default) or diamond')
     parser.add_argument("--device", dest="device", default="LFE5U-45F",
-        help='FPGA device, Kilsyth can be populated with LFE5U-45F (default) or LFE5U-25F')
+        help='FPGA device, Pergola can be populated with LFE5U-45F (default) or LFE5U-25F')
     builder_args(parser)
     soc_core_args(parser)
     args = parser.parse_args()

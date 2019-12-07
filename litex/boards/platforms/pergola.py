@@ -75,17 +75,68 @@ _io = [
     # Connector("pmod", 1, "G2  E2  C1  B1  - - F1  D1  C2  B2  - -"), # PMOD2
     ("spiram", 3,
         Subsignal("cs_n", Pins("G2"), IOStandard("LVCMOS33")),
-        Subsignal("mosi", Pins("C1"), IOStandard("LVCMOS33")), # io0
-        Subsignal("miso", Pins("B1"), IOStandard("LVCMOS33")), # io1
-        Subsignal("clk",  Pins("E2"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("E2"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("C1"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("B1"), IOStandard("LVCMOS33")),
         
         Subsignal("wp",   Pins("F1"), IOStandard("LVCMOS33")), # io2
         Subsignal("hold", Pins("D1"), IOStandard("LVCMOS33")), # io3
     ),
     ("spiram4x", 3,
         Subsignal("cs_n", Pins("G2"), IOStandard("LVCMOS33")),
-        Subsignal("clk",  Pins("E2"), IOStandard("LVCMOS33")),
-        Subsignal("dq",   Pins("C1 B1 F1 D1"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("B1"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("E2 C1 F1 D1"), IOStandard("LVCMOS33")),
+    ),
+
+    # PMOD3
+    # Connector("pmod", 2, "D4  C6  B7  C7  - - C4  B6  A7  A8  - -"), # PMOD3
+    ("spiram", 4,
+        Subsignal("cs_n", Pins("D4"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("C6"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("B7"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("C7"), IOStandard("LVCMOS33")),
+        
+        Subsignal("wp",   Pins("C4"), IOStandard("LVCMOS33")), # io2
+        Subsignal("hold", Pins("B6"), IOStandard("LVCMOS33")), # io3
+    ),
+    ("spiram4x", 4,
+        Subsignal("cs_n", Pins("D4"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("C7"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("C6 B7 C4 B6"), IOStandard("LVCMOS33")),
+    ),
+
+    # PMOD4
+    # Connector("pmod", 3, "B11 B12 B13 B14 - - A12 A13 A14 A15 - -"), # PMOD4
+    ("spiram", 5,
+        Subsignal("cs_n", Pins("B11"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("B12"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("B13"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("B14"), IOStandard("LVCMOS33")),
+        
+        Subsignal("wp",   Pins("A12"), IOStandard("LVCMOS33")), # io2
+        Subsignal("hold", Pins("A13"), IOStandard("LVCMOS33")), # io3
+    ),
+    ("spiram4x", 5,
+        Subsignal("cs_n", Pins("B11"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("B14"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("B12 B13 A12 A13"), IOStandard("LVCMOS33")),
+    ),
+
+    # PMOD5
+    # Connector("pmod", 4, "F16 G16 J16 L16 - - G15 H15 J15 L15 - -"), # PMOD5
+    ("spiram", 6,
+        Subsignal("cs_n", Pins("F16"), IOStandard("LVCMOS33")),
+        Subsignal("mosi", Pins("G16"), IOStandard("LVCMOS33")), # io0
+        Subsignal("miso", Pins("J16"), IOStandard("LVCMOS33")), # io1
+        Subsignal("clk",  Pins("L16"), IOStandard("LVCMOS33")),
+        
+        Subsignal("wp",   Pins("G15"), IOStandard("LVCMOS33")), # io2
+        Subsignal("hold", Pins("H15"), IOStandard("LVCMOS33")), # io3
+    ),
+    ("spiram4x", 6,
+        Subsignal("cs_n", Pins("F16"), IOStandard("LVCMOS33")),
+        Subsignal("clk",  Pins("L16"), IOStandard("LVCMOS33")),
+        Subsignal("dq",   Pins("G16 J16 G15 H15"), IOStandard("LVCMOS33")),
     ),
 ]
 

@@ -15,9 +15,12 @@ _io = [
 
     # Connector("pmod", 2, "D4  C6  B7  C7  - - C4  B6  A7  A8  - -"), # PMOD3
     ("serial", 0,
+        # Actual location
+        # Subsignal("tx", Pins("R1"), IOStandard("LVCMOS33")),
+        Subsignal("rx", Pins("T2"), IOStandard("LVCMOS33")),
         # temporary on PMOD3
-        Subsignal("tx", Pins("C4"), IOStandard("LVCMOS33")),
-        Subsignal("rx", Pins("D4"), IOStandard("LVCMOS33"))
+        Subsignal("tx", Pins("C4"), IOStandard("LVCMOS33")),   #bottom
+        # Subsignal("rx", Pins("D4"), IOStandard("LVCMOS33"))      #top
     ),
 
     # Built-in #1

@@ -20,6 +20,7 @@ from litex.soc.cores.spi import SPIMaster
 
 _FAST_READ = 0x0b
 _WRITE = 0x02
+_QIOFW = 0x38
 _DIOFR = 0xbb
 _QIOFR = 0xeb
 
@@ -234,7 +235,7 @@ class SpiRamQuad(SpiFlashCommon, AutoCSR):
         read_cmd = _QIOFR
         read_cmd_width = 8
 
-        write_cmd = _WRITE
+        write_cmd = _QIOFW
         write_cmd_width = 8
 
         addr_width = 24
